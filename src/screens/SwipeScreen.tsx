@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -24,6 +24,15 @@ import ActionButton from '../components/ActionButton';
 import foodsData from '../data/foods.json';
 import { Food } from '../types/index';
 
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+  withTiming,
+  runOnJS,
+} from 'react-native-reanimated';
+
 const foods = foodsData.foods as Food[];
 
 type SwipeScreenNavigationProp = NativeStackNavigationProp<
@@ -36,13 +45,106 @@ interface Props {
 }
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const SWIPE_THRESHOLD = SCREEN_WIDTH * 0.3;
 
 export default function SwipeScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();
 
-  // Static in Phase 2 — shows first card, progress at 0%
-  const currentFood = foods[0];
-  const nextFood = foods[1];
+  // T-4.1 Track: currentIndex, likedFoods[], dislikedFoods[]
+  const [currentIndex, setCurrentIndex] = React.useState(0);
+  const currentIndexRef = React.useRef(0);
+  const [likedFoods, setLikedFoods] = React.useState<Food[]>([]);
+  const [dislikedFoods, setDislikedFoods] = React.useState<Food[]>([]);
+
+  // T-4.2 Create shared values
+  const translateX = useSharedValue(0);
+  const translateY = useSharedValue(0);
+  const rotation = useSharedValue(0);
+
+  const currentFood = foods[currentIndex];
+  const nextFood = foods[currentIndex + 1];
+
+  // T-4.12 Navigate to Results Screen when all cards are processed
+  React.useEffect(() => {
+    if (currentIndex > 0 && currentIndex >= foods.length) {
+      navigation.navigate('Results', { likedFoods, dislikedFoods });
+    }
+  }, [currentIndex, likedFoods, dislikedFoods, navigation]);
+
+  // T-4.8 Add card to liked/disliked collection, Advance currentIndex
+  const handleSwipeEnd = (direction: 'left' | 'right') => {
+    const idx = currentIndexRef.current;
+    if (idx >= foods.length) return;
+    const food = foods[idx];
+
+    if (direction === 'right') {
+      setLikedFoods((prev) => [...prev, food]);
+    } else {
+      setDislikedFoods((prev) => [...prev, food]);
+    }
+
+    const nextIndex = idx + 1;
+    currentIndexRef.current = nextIndex;
+    setCurrentIndex(nextIndex);
+
+    // Reset shared values for the next card instantly
+    translateX.value = 0;
+    translateY.value = 0;
+    rotation.value = 0;
+  };
+
+  // T-4.7 Animate card exit off-screen
+  // T-4.9 & T-4.10 logic sharing
+  const swipeLeft = () => {
+    translateX.value = withTiming(-SCREEN_WIDTH * 1.5, { duration: 300 }, (finished) => {
+      if (finished) runOnJS(handleSwipeEnd)('left');
+    });
+    translateY.value = withTiming(50, { duration: 300 });
+    rotation.value = withTiming(-15, { duration: 300 });
+  };
+
+  const swipeRight = () => {
+    translateX.value = withTiming(SCREEN_WIDTH * 1.5, { duration: 300 }, (finished) => {
+      if (finished) runOnJS(handleSwipeEnd)('right');
+    });
+    translateY.value = withTiming(50, { duration: 300 });
+    rotation.value = withTiming(15, { duration: 300 });
+  };
+
+  // T-4.3 Attach pan gesture to top card
+  const panGesture = Gesture.Pan()
+    .onUpdate((event) => {
+      // T-4.4 Animate card movement and rotation during drag
+      translateX.value = event.translationX;
+      translateY.value = event.translationY;
+      rotation.value = (event.translationX / SCREEN_WIDTH) * 15; // Max 15 degrees
+    })
+    .onEnd((event) => {
+      // T-4.5 & T-4.6 Implement swipe threshold detection
+      const isSwipeRight = event.translationX > SWIPE_THRESHOLD || event.velocityX > 800;
+      const isSwipeLeft = event.translationX < -SWIPE_THRESHOLD || event.velocityX < -800;
+
+      if (isSwipeRight) {
+        runOnJS(swipeRight)();
+      } else if (isSwipeLeft) {
+        runOnJS(swipeLeft)();
+      } else {
+        // Snap back to center
+        translateX.value = withSpring(0);
+        translateY.value = withSpring(0);
+        rotation.value = withSpring(0);
+      }
+    });
+
+  const animatedCardStyle = useAnimatedStyle(() => {
+    return {
+      transform: [
+        { translateX: translateX.value },
+        { translateY: translateY.value },
+        { rotateZ: `${rotation.value}deg` },
+      ],
+    };
+  });
 
   return (
     <View style={styles.root}>
@@ -54,7 +156,7 @@ export default function SwipeScreen({ navigation }: Props) {
         end={{ x: 0.5, y: 1 }}
       />
 
-      {/* Progress bar — thin strip at top */}
+      {/* Progress bar — not wired yet (Phase 5) */}
       <View style={[styles.progressContainer, { paddingTop: insets.top + 12 }]}>
         <ProgressBar progress={0} />
         <Text style={styles.progressLabel}>
@@ -62,25 +164,29 @@ export default function SwipeScreen({ navigation }: Props) {
         </Text>
       </View>
 
-      {/* Card stack — back card peeking behind top card */}
       <View style={styles.cardStack}>
-        {/* Back card — positioned behind */}
-        <View style={styles.backCardWrapper}>
-          <FoodCard food={nextFood} isBack />
-        </View>
-        {/* Top card — the active card */}
-        <FoodCard food={currentFood} />
+        {nextFood && (
+          <View style={styles.backCardWrapper}>
+            <FoodCard food={nextFood} isBack />
+          </View>
+        )}
+        
+        {currentFood && (
+          <GestureDetector gesture={panGesture}>
+            <Animated.View style={[styles.topCardWrapper, animatedCardStyle]}>
+              <FoodCard food={currentFood} />
+            </Animated.View>
+          </GestureDetector>
+        )}
       </View>
 
-      {/* Action buttons row */}
       <View style={styles.actionsRow}>
-        <ActionButton type="dislike" />
+        <ActionButton type="dislike" onPress={currentFood ? swipeLeft : undefined} />
         <ActionButton type="notSure" />
         <ActionButton type="superLike" />
-        <ActionButton type="like" />
+        <ActionButton type="like" onPress={currentFood ? swipeRight : undefined} />
       </View>
 
-      {/* Bottom Navigation */}
       <BottomNav activeTab="TasteProfile" />
     </View>
   );
@@ -112,9 +218,14 @@ const styles = StyleSheet.create({
     position: 'absolute',
     alignItems: 'center',
     justifyContent: 'center',
-    // Shift back card slightly down to simulate stack depth
     transform: [{ translateY: 14 }, { scale: 0.95 }],
     zIndex: 0,
+  },
+  topCardWrapper: {
+    position: 'absolute',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 1,
   },
   actionsRow: {
     flexDirection: 'row',
