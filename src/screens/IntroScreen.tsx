@@ -21,6 +21,7 @@ import {
   Shadow,
 } from '../theme/index';
 import BottomNav from '../components/BottomNav';
+import GlassView from '../components/GlassView';
 
 type IntroScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -53,7 +54,7 @@ export default function IntroScreen({ navigation }: Props) {
 
       {/* Main onboarding card */}
       <View style={styles.scrollArea}>
-        <View style={styles.card}>
+        <GlassView style={styles.card} borderRadius={BorderRadius.xl}>
           {/* Emoji illustration */}
           <Text style={styles.emoji}>😋</Text>
 
@@ -81,7 +82,7 @@ export default function IntroScreen({ navigation }: Props) {
 
           {/* Helper text */}
           <Text style={styles.helperText}>Takes about 2 minutes.</Text>
-        </View>
+        </GlassView>
       </View>
 
       {/* Bottom Navigation */}
@@ -112,13 +113,10 @@ const styles = StyleSheet.create({
     paddingBottom: Spacing.md,
   },
   card: {
-    backgroundColor: Colors.backgroundCard,
-    borderRadius: BorderRadius.xl,
     paddingVertical: Spacing.xxl,
     paddingHorizontal: Spacing.xl,
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
+    borderWidth: 0,
     ...Shadow.card,
   },
   emoji: {

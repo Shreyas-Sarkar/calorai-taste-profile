@@ -22,6 +22,7 @@ import {
   Shadow,
 } from '../theme/index';
 import BottomNav from '../components/BottomNav';
+import GlassView from '../components/GlassView';
 
 type ResultsScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -99,7 +100,7 @@ export default function ResultsScreen({ navigation, route }: Props) {
 
         {/* Key Highlights section */}
         <Text style={styles.sectionLabel}>Key Highlights:</Text>
-        <View style={styles.card}>
+        <GlassView style={styles.card} borderRadius={BorderRadius.lg}>
           <View style={styles.highlightsRow}>
             {HIGHLIGHT_ITEMS.map((item, index) => (
               <React.Fragment key={item.label}>
@@ -118,10 +119,10 @@ export default function ResultsScreen({ navigation, route }: Props) {
             <View style={[styles.dot, styles.dotActive]} />
             <View style={styles.dot} />
           </View>
-        </View>
+        </GlassView>
 
         {/* Lifestyle & Goals section */}
-        <View style={[styles.card, styles.cardSpacedTop]}>
+        <GlassView style={[styles.card, styles.cardSpacedTop]} borderRadius={BorderRadius.lg}>
           <View style={styles.cardHeader}>
             <Text style={styles.cardHeaderEmoji}>💪</Text>
             <View>
@@ -139,10 +140,10 @@ export default function ResultsScreen({ navigation, route }: Props) {
               <Text style={styles.checkLabel}>{item}</Text>
             </View>
           ))}
-        </View>
+        </GlassView>
 
         {/* Foods You Love section */}
-        <View style={[styles.card, styles.cardSpacedTop]}>
+        <GlassView style={[styles.card, styles.cardSpacedTop]} borderRadius={BorderRadius.lg}>
           <View style={styles.cardHeader}>
             <Text style={styles.cardHeaderEmoji}>❤️</Text>
             <View>
@@ -158,7 +159,7 @@ export default function ResultsScreen({ navigation, route }: Props) {
               <Text style={styles.foodLabel}>{item.label}</Text>
             </View>
           ))}
-        </View>
+        </GlassView>
 
         <View style={{ height: Spacing.xl }} />
       </ScrollView>
@@ -222,11 +223,8 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.sm,
   },
   card: {
-    backgroundColor: Colors.backgroundCard,
-    borderRadius: BorderRadius.lg,
     padding: Spacing.md,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.07)',
+    borderWidth: 0,
     ...Shadow.card,
   },
   cardSpacedTop: {

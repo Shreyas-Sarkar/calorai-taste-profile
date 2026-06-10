@@ -4,10 +4,10 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  Platform,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors, Spacing, BorderRadius, FontSize, FontWeight, Shadow } from '../theme/index';
+import GlassView from './GlassView';
 
 export type NavTab = 'Start' | 'FAQ' | 'TasteProfile' | 'Search';
 
@@ -16,7 +16,6 @@ interface Props {
   onTabPress?: (tab: NavTab) => void;
 }
 
-// Simple SVG-like icons using Unicode / emoji for Phase 2 (no icon library needed)
 const NAV_ITEMS: { tab: NavTab; icon: string; label: string }[] = [
   { tab: 'Start',        icon: '⊙',  label: 'Start' },
   { tab: 'FAQ',          icon: '?',   label: 'FAQ' },
@@ -30,7 +29,10 @@ export default function BottomNav({ activeTab, onTabPress }: Props) {
 
   return (
     <View style={[styles.wrapper, { paddingBottom: bottomPad }]}>
-      <View style={styles.container}>
+      <GlassView 
+        style={styles.container} 
+        borderRadius={BorderRadius.xl}
+      >
         {NAV_ITEMS.map(({ tab, icon, label }) => {
           const isActive = tab === activeTab;
           return (
@@ -53,7 +55,7 @@ export default function BottomNav({ activeTab, onTabPress }: Props) {
             </TouchableOpacity>
           );
         })}
-      </View>
+      </GlassView>
     </View>
   );
 }
@@ -65,21 +67,12 @@ const styles = StyleSheet.create({
   },
   container: {
     flexDirection: 'row',
-    backgroundColor: Colors.navBackground,
-    borderRadius: BorderRadius.xl,
-    borderWidth: 1,
-    borderColor: Colors.navBorder,
     paddingVertical: Spacing.sm,
     paddingHorizontal: Spacing.sm,
     alignItems: 'center',
     justifyContent: 'space-around',
+    borderWidth: 0, 
     ...Shadow.nav,
-    // Android fallback: slightly more opaque since no blur
-    ...Platform.select({
-      android: {
-        backgroundColor: 'rgba(10, 16, 12, 0.95)',
-      },
-    }),
   },
   tab: {
     flex: 1,
