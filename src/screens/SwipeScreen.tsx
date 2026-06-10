@@ -1,290 +1,189 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from "react";
 import {
-  View,
-  Text,
+  ActivityIndicator,
   StyleSheet,
-  StatusBar,
-  Dimensions,
-} from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../navigation/AppNavigator';
-import {
-  Colors,
-  Gradients,
-  Spacing,
-  FontSize,
-  FontWeight,
-  Shadow,
-} from '../theme/index';
-import BottomNav from '../components/BottomNav';
-import FoodCard from '../components/FoodCard';
-import ProgressBar from '../components/ProgressBar';
-import ActionButton from '../components/ActionButton';
-import foodsData from '../data/foods.json';
-import { Food } from '../types/index';
+  Text,
+  View,
+  Platform,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { LinearGradient } from "expo-linear-gradient";
+import * as Haptics from "expo-haptics";
+import { useNavigation } from "@react-navigation/native";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import CardStack from "../components/CardStack";
+import ProgressBar from "../components/ProgressBar";
+import ActionButton from "../components/ActionButton";
+import BackgroundBlobs from "../components/BackgroundBlobs";
+import { FoodCardRef } from "../components/FoodCard";
+import CrossIcon from "../../assets/icons/cross.svg";
+import StarIcon from "../../assets/icons/star.svg";
+import QuestionIcon from "../../assets/icons/question.svg";
+import HeartIcon from "../../assets/icons/heart.svg";
+import { Colors, Spacing, Typography } from "../constants";
+import { RootStackParamList, SwipeDirection, SwipeResult } from '../types';
+import { foods, globalResults } from '../data';
 
-import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withSpring,
-  withTiming,
-  runOnJS,
-  interpolate,
-  Extrapolation,
-} from 'react-native-reanimated';
+type NavProp = NativeStackNavigationProp<RootStackParamList, "Swipe">;
 
-const foods = foodsData.foods as Food[];
+export default function SwipeScreen() {
+  const navigation = useNavigation<NavProp>();
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [results, setResults] = useState<SwipeResult[]>([]);
+  const topCardRef = useRef<FoodCardRef | null>(null);
+  const isDone = currentIndex >= foods.length;
 
-type SwipeScreenNavigationProp = NativeStackNavigationProp<
-  RootStackParamList,
-  'Swipe'
->;
+  const handleSwipe = (direction: SwipeDirection) => {
+    const food = foods[currentIndex];
+    const newResults = [...results, { food, direction }];
+    const nextIndex = currentIndex + 1;
 
-interface Props {
-  navigation: SwipeScreenNavigationProp;
-}
-
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const SWIPE_THRESHOLD = SCREEN_WIDTH * 0.3;
-
-export default function SwipeScreen({ navigation }: Props) {
-  const insets = useSafeAreaInsets();
-
-  // T-4.1 Track: currentIndex, likedFoods[], dislikedFoods[]
-  const [currentIndex, setCurrentIndex] = React.useState(0);
-  const currentIndexRef = React.useRef(0);
-  const [likedFoods, setLikedFoods] = React.useState<Food[]>([]);
-  const [dislikedFoods, setDislikedFoods] = React.useState<Food[]>([]);
-
-  // T-4.2 Create shared values
-  const translateX = useSharedValue(0);
-  const translateY = useSharedValue(0);
-  const rotation = useSharedValue(0);
-
-  const currentFood = foods[currentIndex];
-  const nextFood = foods[currentIndex + 1];
-
-  // T-4.12 Navigate to Results Screen when all cards are processed
-  React.useEffect(() => {
-    if (currentIndex > 0 && currentIndex >= foods.length) {
-      navigation.navigate('Results', { likedFoods, dislikedFoods });
-    }
-  }, [currentIndex, likedFoods, dislikedFoods, navigation]);
-
-  // T-4.8 Add card to liked/disliked collection, Advance currentIndex
-  const handleSwipeEnd = (direction: 'left' | 'right') => {
-    const idx = currentIndexRef.current;
-    if (idx >= foods.length) return;
-    const food = foods[idx];
-
-    if (direction === 'right') {
-      setLikedFoods((prev) => [...prev, food]);
-    } else {
-      setDislikedFoods((prev) => [...prev, food]);
-    }
-
-    const nextIndex = idx + 1;
-    currentIndexRef.current = nextIndex;
+    setResults(newResults);
     setCurrentIndex(nextIndex);
 
-    // Reset shared values for the next card instantly
-    translateX.value = 0;
-    translateY.value = 0;
-    rotation.value = 0;
+    Haptics.impactAsync(
+      direction === "like" || direction === "superlike"
+        ? Haptics.ImpactFeedbackStyle.Medium
+        : Haptics.ImpactFeedbackStyle.Light,
+    );
+
+    if (nextIndex >= foods.length) {
+      setTimeout(() => {
+        // Clear globalResults and push new ones so we mutate it correctly
+        globalResults.length = 0;
+        globalResults.push(...newResults);
+        navigation.navigate("Results", { results: newResults });
+      }, 500);
+    }
   };
 
-  // T-4.7 Animate card exit off-screen
-  // T-4.9 & T-4.10 logic sharing
-  const swipeLeft = () => {
-    translateX.value = withTiming(-SCREEN_WIDTH * 1.5, { duration: 300 }, (finished) => {
-      if (finished) runOnJS(handleSwipeEnd)('left');
-    });
-    translateY.value = withTiming(50, { duration: 300 });
-    rotation.value = withTiming(-15, { duration: 300 });
+  const triggerSwipe = (direction: SwipeDirection) => {
+    if (!isDone) topCardRef.current?.triggerSwipe(direction);
   };
-
-  const swipeRight = () => {
-    translateX.value = withTiming(SCREEN_WIDTH * 1.5, { duration: 300 }, (finished) => {
-      if (finished) runOnJS(handleSwipeEnd)('right');
-    });
-    translateY.value = withTiming(50, { duration: 300 });
-    rotation.value = withTiming(15, { duration: 300 });
-  };
-
-  // T-4.3 Attach pan gesture to top card
-  const panGesture = Gesture.Pan()
-    .onUpdate((event) => {
-      // T-4.4 Animate card movement and rotation during drag
-      translateX.value = event.translationX;
-      translateY.value = event.translationY;
-      rotation.value = (event.translationX / SCREEN_WIDTH) * 15; // Max 15 degrees
-    })
-    .onEnd((event) => {
-      // T-4.5 & T-4.6 Implement swipe threshold detection
-      const isSwipeRight = event.translationX > SWIPE_THRESHOLD || event.velocityX > 800;
-      const isSwipeLeft = event.translationX < -SWIPE_THRESHOLD || event.velocityX < -800;
-
-      if (isSwipeRight) {
-        runOnJS(swipeRight)();
-      } else if (isSwipeLeft) {
-        runOnJS(swipeLeft)();
-      } else {
-        // Snap back to center
-        translateX.value = withSpring(0);
-        translateY.value = withSpring(0);
-        rotation.value = withSpring(0);
-      }
-    });
-
-  const animatedCardStyle = useAnimatedStyle(() => {
-    return {
-      transform: [
-        { translateX: translateX.value },
-        { translateY: translateY.value },
-        { rotateZ: `${rotation.value}deg` },
-      ],
-    };
-  });
-
-  const yesOpacityStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(translateX.value, [0, SCREEN_WIDTH * 0.2], [0, 1], Extrapolation.CLAMP),
-  }));
-
-  const noOpacityStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(translateX.value, [0, -SCREEN_WIDTH * 0.2], [0, 1], Extrapolation.CLAMP),
-  }));
 
   return (
-    <View style={styles.root}>
-      <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
-      <LinearGradient
-        colors={Gradients.background as [string, string, ...string[]]}
-        style={StyleSheet.absoluteFill}
-        start={{ x: 0.5, y: 0 }}
-        end={{ x: 0.5, y: 1 }}
-      />
-      {/* Ambient background glows for glassmorphism */}
-      <View style={StyleSheet.absoluteFill} pointerEvents="none">
-        <LinearGradient
-          colors={['rgba(14, 165, 233, 0.15)', 'transparent']}
-          start={{ x: 0, y: 0.2 }}
-          end={{ x: 0.5, y: 0.5 }}
-          style={StyleSheet.absoluteFill}
-        />
-        <LinearGradient
-          colors={['rgba(34, 197, 94, 0.15)', 'transparent']}
-          start={{ x: 1, y: 0.8 }}
-          end={{ x: 0.5, y: 0.5 }}
-          style={StyleSheet.absoluteFill}
-        />
-      </View>
+    <LinearGradient
+      colors={[Colors.gradientTop, Colors.gradientBottom]}
+      style={styles.root}
+    >
+      <BackgroundBlobs />
+      <SafeAreaView style={styles.safe}>
+        <View style={styles.progressContainer}>
+          <ProgressBar current={currentIndex} total={foods.length} />
+        </View>
 
-      {/* Progress bar — not wired yet (Phase 5) */}
-      <View style={[styles.progressContainer, { paddingTop: insets.top + 12 }]}>
-        <ProgressBar progress={0} />
-      </View>
+        <View style={styles.cardArea}>
+          {isDone ? (
+            <View style={styles.doneState}>
+              <ActivityIndicator color={Colors.accent} size="large" />
+              <Text style={styles.doneText}>Building your profile...</Text>
+            </View>
+          ) : (
+            <CardStack
+              foods={foods}
+              currentIndex={currentIndex}
+              onSwipe={handleSwipe}
+              topCardRef={topCardRef}
+            />
+          )}
+        </View>
 
-      <View style={styles.cardStack}>
-        {nextFood && (
-          <View style={styles.backCardWrapper}>
-            <FoodCard food={nextFood} isBack />
+        <View style={styles.actions}>
+          <View style={styles.actionItem}>
+            <ActionButton
+              Icon={CrossIcon}
+              iconColor="#FFFFFF"
+              bgColor="#fa0202"
+              shadowColor="#fa0202"
+              size="lg"
+              onPress={() => triggerSwipe("dislike")}
+            />
+            <Text style={[styles.actionLabel]}>Swipe Left</Text>
           </View>
-        )}
-        
-        {currentFood && (
-          <GestureDetector gesture={panGesture}>
-            <Animated.View style={[styles.topCardWrapper, animatedCardStyle]}>
-              <FoodCard food={currentFood} />
-              <Animated.View style={[styles.stamp, styles.stampYes, yesOpacityStyle]}>
-                <Text style={styles.stampText}>Yes</Text>
-              </Animated.View>
-              <Animated.View style={[styles.stamp, styles.stampNo, noOpacityStyle]}>
-                <Text style={styles.stampText}>No</Text>
-              </Animated.View>
-            </Animated.View>
-          </GestureDetector>
-        )}
-      </View>
 
-      <View style={styles.actionsRow}>
-        <ActionButton type="dislike" onPress={currentFood ? swipeLeft : undefined} />
-        <ActionButton type="notSure" />
-        <ActionButton type="superLike" />
-        <ActionButton type="like" onPress={currentFood ? swipeRight : undefined} />
-      </View>
+          <View style={styles.actionItem}>
+            <ActionButton
+              Icon={QuestionIcon}
+              iconColor="#FFFFFF"
+              bgColor="#94A3B8"
+              shadowColor="rgba(255,255,255,0.4)"
+              size="sm"
+              onPress={() => triggerSwipe("unsure")}
+            />
+            <Text style={[styles.actionLabel]}>Not Sure</Text>
+          </View>
 
-      <BottomNav activeTab="TasteProfile" />
-    </View>
+          <View style={styles.actionItem}>
+            <ActionButton
+              Icon={StarIcon}
+              iconColor="#00E5FF"
+              bgColor={["#7C66FF", "#4FA5FF"]}
+              shadowColor="#4FA5FF"
+              size="sm"
+              onPress={() => triggerSwipe("superlike")}
+            />
+            <Text style={[styles.actionLabel]}>Super Like</Text>
+          </View>
+
+          <View style={styles.actionItem}>
+            <ActionButton
+              Icon={HeartIcon}
+              iconColor="#FFFFFF"
+              bgColor="#0bd400"
+              shadowColor="#0bd400"
+              size="lg"
+              onPress={() => triggerSwipe("like")}
+            />
+            <Text style={[styles.actionLabel]}>Swipe Right</Text>
+          </View>
+        </View>
+      </SafeAreaView>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: Colors.backgroundDark,
+  },
+  safe: {
+    flex: 1,
   },
   progressContainer: {
-    paddingHorizontal: Spacing.lg,
-    paddingBottom: Spacing.sm,
-    gap: 6,
+    marginBottom: Spacing.lg,
   },
-  progressLabel: {
-    fontSize: FontSize.xs,
-    fontWeight: FontWeight.medium,
-    color: Colors.textMuted,
-    textAlign: 'right',
-  },
-  cardStack: {
+  cardArea: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: Spacing.sm,
+    alignItems: "center",
+    justifyContent: "center",
   },
-  backCardWrapper: {
-    position: 'absolute',
-    alignItems: 'center',
-    justifyContent: 'center',
-    transform: [{ translateY: 14 }, { scale: 0.95 }],
-    zIndex: 0,
+  doneState: {
+    alignItems: "center",
+    gap: Spacing.md,
   },
-  topCardWrapper: {
-    position: 'absolute',
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 1,
+  doneText: {
+    color: Colors.textSecondary,
+    fontSize: Typography.base,
+    fontWeight: Typography.medium,
   },
-  actionsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-evenly',
-    alignItems: 'center',
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.md,
+  actions: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "flex-end",
+    gap: Spacing.lg,
+    paddingHorizontal: Spacing.xl,
+    paddingBottom: Spacing.xl,
   },
-  stamp: {
-    position: 'absolute',
-    top: 40,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 24,
-    zIndex: 10,
-    ...Shadow.button,
+  actionItem: {
+    alignItems: "center",
+    gap: Spacing.md,
   },
-  stampYes: {
-    right: 40,
-    backgroundColor: Colors.buttonLike,
-    transform: [{ rotateZ: '15deg' }],
-  },
-  stampNo: {
-    left: 40,
-    backgroundColor: Colors.buttonDislike,
-    transform: [{ rotateZ: '-15deg' }],
-  },
-  stampText: {
-    color: Colors.backgroundDark,
-    fontSize: 22,
-    fontWeight: FontWeight.bold,
+  actionLabel: {
+    fontFamily: Platform.OS === "ios" ? "System" : "sans-serif",
+    fontSize: 11.61,
+    lineHeight: 13.93,
+    fontWeight: "500",
+    color: "rgba(255, 255, 255, 0.85)",
+    textAlign: "center",
   },
 });
