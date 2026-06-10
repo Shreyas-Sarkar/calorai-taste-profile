@@ -1,100 +1,99 @@
 import React from 'react';
-import {
-  TouchableOpacity,
-  Text,
-  View,
-  StyleSheet,
-  Platform,
-} from 'react-native';
-import { Colors, FontSize, FontWeight, Shadow } from '../theme/index';
+import { StyleSheet, TouchableOpacity, ViewStyle, View } from 'react-native';
+import { SvgProps } from 'react-native-svg';
+import { LinearGradient } from 'expo-linear-gradient';
 
-export type ActionType = 'dislike' | 'notSure' | 'superLike' | 'like';
-
-const ACTION_CONFIG: Record<
-  ActionType,
-  { bg: string; icon: string; label: string; size: number }
-> = {
-  dislike: {
-    bg: Colors.buttonDislike,
-    icon: '✕',
-    label: 'Swipe Left',
-    size: 58,
-  },
-  notSure: {
-    bg: Colors.buttonNotSure,
-    icon: '?',
-    label: 'Not Sure',
-    size: 50,
-  },
-  superLike: {
-    bg: Colors.buttonSuperLike,
-    icon: '★',
-    label: 'Super Like',
-    size: 50,
-  },
-  like: {
-    bg: Colors.buttonLike,
-    icon: '♥',
-    label: 'Swipe Right',
-    size: 58,
-  },
-};
-
-interface Props {
-  type: ActionType;
-  onPress?: () => void;
+interface ActionButtonProps {
+  Icon: React.FC<SvgProps>;
+  iconColor?: string;
+  iconSize?: number;
+  bgColor: string | string[]; // Can be an array for gradient backgrounds (Superlike)
+  size?: 'sm' | 'lg';
+  shadowColor?: string;
+  onPress: () => void;
+  style?: ViewStyle;
 }
 
-export default function ActionButton({ type, onPress }: Props) {
-  const { bg, icon, label, size } = ACTION_CONFIG[type];
+export default function ActionButton({
+  Icon,
+  iconColor = '#FFFFFF',
+  iconSize,
+  bgColor,
+  size = 'sm',
+  shadowColor = '#000',
+  onPress,
+  style,
+}: ActionButtonProps) {
+  const dimension = size === 'lg' ? 72 : 48;
+  const resolvedIconSize = iconSize ?? (size === 'lg' ? 28 : 24);
+  const isGradientBg = Array.isArray(bgColor);
+
+  const InnerContent = () => (
+    <TouchableOpacity
+      onPress={onPress}
+      activeOpacity={0.8}
+      style={[
+        styles.innerBtn,
+        !isGradientBg && { backgroundColor: bgColor as string },
+      ]}
+    >
+      <Icon width={resolvedIconSize} height={resolvedIconSize} color={iconColor} />
+    </TouchableOpacity>
+  );
 
   return (
-    <View style={styles.wrapper}>
-      <TouchableOpacity
-        onPress={onPress}
-        activeOpacity={0.8}
-        style={[
-          styles.button,
-          { 
-            backgroundColor: bg, 
-            width: size, 
-            height: size, 
-            borderRadius: size / 2,
-            shadowColor: bg,
-            shadowOffset: { width: 0, height: 0 },
-            shadowOpacity: type === 'notSure' ? 0.2 : 0.6,
-            shadowRadius: type === 'notSure' ? 10 : 20,
-            elevation: type === 'notSure' ? 4 : 10,
-          },
-        ]}
+    <View
+      style={[
+        styles.shadowContainer,
+        {
+          width: dimension,
+          height: dimension,
+          borderRadius: dimension / 2,
+          shadowColor: shadowColor,
+        },
+        style,
+      ]}
+    >
+      <LinearGradient
+        colors={['rgba(255,255,255,1)', 'transparent', 'transparent', 'rgba(255,255,255,1)']}
+        locations={[0, 0.35, 0.65, 1]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={[styles.borderGradient, { borderRadius: dimension / 2 }]}
       >
-        <Text style={[styles.icon, { fontSize: type === 'dislike' || type === 'like' ? 22 : 20 }]}>
-          {icon}
-        </Text>
-      </TouchableOpacity>
-      <Text style={styles.label}>{label}</Text>
+        {isGradientBg ? (
+          <LinearGradient
+            colors={bgColor as unknown as readonly [string, string, ...string[]]}
+            style={[styles.innerGradient, { borderRadius: dimension / 2 }]}
+          >
+            <InnerContent />
+          </LinearGradient>
+        ) : (
+          <InnerContent />
+        )}
+      </LinearGradient>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  wrapper: {
-    alignItems: 'center',
-    gap: 6,
+  shadowContainer: {
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.9,
+    shadowRadius: 24,
+    elevation: 12,
   },
-  button: {
+  borderGradient: {
+    flex: 1,
+    padding: 1, // 1px border thickness
+  },
+  innerGradient: {
+    flex: 1,
+  },
+  innerBtn: {
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    ...Shadow.button,
-  },
-  icon: {
-    color: Colors.white,
-    fontWeight: FontWeight.bold,
-  },
-  label: {
-    fontSize: FontSize.xs,
-    fontWeight: FontWeight.medium,
-    color: Colors.textMuted,
-    textAlign: 'center',
+    borderRadius: 9999,
   },
 });

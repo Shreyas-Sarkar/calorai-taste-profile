@@ -1,18 +1,32 @@
-import React from 'react';
-import { View, StyleSheet } from 'react-native';
-import { Colors } from '../theme/index';
+import React, { useEffect, useRef } from 'react';
+import { Animated, StyleSheet, View } from 'react-native';
+import { Colors, Radius } from '../constants';
 
-interface Props {
-  /** 0.0 to 1.0 */
-  progress: number;
+interface ProgressBarProps {
+  current: number;
+  total: number;
 }
 
-export default function ProgressBar({ progress }: Props) {
-  const clampedProgress = Math.max(0, Math.min(1, progress));
+export default function ProgressBar({ current, total }: ProgressBarProps) {
+  const progress = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.timing(progress, {
+      toValue: total > 0 ? current / total : 0,
+      duration: 400,
+      useNativeDriver: false,
+    }).start();
+  }, [current, total]);
+
+  const width = progress.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0%', '100%'],
+    extrapolate: 'clamp',
+  });
 
   return (
     <View style={styles.track}>
-      <View style={[styles.fill, { width: `${clampedProgress * 100}%` }]} />
+      <Animated.View style={[styles.fill, { width }]} />
     </View>
   );
 }
@@ -20,13 +34,13 @@ export default function ProgressBar({ progress }: Props) {
 const styles = StyleSheet.create({
   track: {
     height: 4,
-    borderRadius: 2,
-    backgroundColor: Colors.progressTrack,
+    backgroundColor: Colors.progressBg,
+    borderRadius: Radius.full,
     overflow: 'hidden',
   },
   fill: {
     height: '100%',
-    borderRadius: 2,
     backgroundColor: Colors.progressFill,
+    borderRadius: Radius.full,
   },
 });
