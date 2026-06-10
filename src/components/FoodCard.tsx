@@ -90,8 +90,6 @@ const styles = StyleSheet.create({
     borderRadius: 70,
     overflow: 'hidden',
     marginBottom: 32,
-    borderWidth: 4,
-    borderColor: 'rgba(255,255,255,0.1)',
   },
   image: {
     width: '100%',

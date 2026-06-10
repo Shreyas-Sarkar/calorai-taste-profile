@@ -49,6 +49,9 @@ export default function IntroScreen({ navigation }: Props) {
 
       {/* Page header — outside the card */}
       <View style={[styles.pageHeader, { paddingTop: insets.top + 16 }]}>
+        <TouchableOpacity style={styles.backButton}>
+          <Text style={styles.backButtonText}>{'<'}</Text>
+        </TouchableOpacity>
         <Text style={styles.pageTitle}>Design Your Food Plan</Text>
       </View>
 
@@ -105,6 +108,23 @@ const styles = StyleSheet.create({
     fontWeight: FontWeight.bold,
     color: Colors.textPrimary,
     letterSpacing: -0.5,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+  },
+  backButtonText: {
+    color: Colors.white,
+    fontSize: 20,
+    fontWeight: '300',
+    marginTop: -2,
   },
   scrollArea: {
     flex: 1,

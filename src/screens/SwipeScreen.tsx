@@ -16,6 +16,7 @@ import {
   Spacing,
   FontSize,
   FontWeight,
+  Shadow,
 } from '../theme/index';
 import BottomNav from '../components/BottomNav';
 import FoodCard from '../components/FoodCard';
@@ -31,6 +32,8 @@ import Animated, {
   withSpring,
   withTiming,
   runOnJS,
+  interpolate,
+  Extrapolation,
 } from 'react-native-reanimated';
 
 const foods = foodsData.foods as Food[];
@@ -146,6 +149,14 @@ export default function SwipeScreen({ navigation }: Props) {
     };
   });
 
+  const yesOpacityStyle = useAnimatedStyle(() => ({
+    opacity: interpolate(translateX.value, [0, SCREEN_WIDTH * 0.2], [0, 1], Extrapolation.CLAMP),
+  }));
+
+  const noOpacityStyle = useAnimatedStyle(() => ({
+    opacity: interpolate(translateX.value, [0, -SCREEN_WIDTH * 0.2], [0, 1], Extrapolation.CLAMP),
+  }));
+
   return (
     <View style={styles.root}>
       <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
@@ -159,9 +170,6 @@ export default function SwipeScreen({ navigation }: Props) {
       {/* Progress bar — not wired yet (Phase 5) */}
       <View style={[styles.progressContainer, { paddingTop: insets.top + 12 }]}>
         <ProgressBar progress={0} />
-        <Text style={styles.progressLabel}>
-          0 / {foods.length}
-        </Text>
       </View>
 
       <View style={styles.cardStack}>
@@ -175,6 +183,12 @@ export default function SwipeScreen({ navigation }: Props) {
           <GestureDetector gesture={panGesture}>
             <Animated.View style={[styles.topCardWrapper, animatedCardStyle]}>
               <FoodCard food={currentFood} />
+              <Animated.View style={[styles.stamp, styles.stampYes, yesOpacityStyle]}>
+                <Text style={styles.stampText}>Yes</Text>
+              </Animated.View>
+              <Animated.View style={[styles.stamp, styles.stampNo, noOpacityStyle]}>
+                <Text style={styles.stampText}>No</Text>
+              </Animated.View>
             </Animated.View>
           </GestureDetector>
         )}
@@ -233,5 +247,29 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: Spacing.lg,
     paddingVertical: Spacing.md,
+  },
+  stamp: {
+    position: 'absolute',
+    top: 40,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 24,
+    zIndex: 10,
+    ...Shadow.button,
+  },
+  stampYes: {
+    right: 40,
+    backgroundColor: Colors.buttonLike,
+    transform: [{ rotateZ: '15deg' }],
+  },
+  stampNo: {
+    left: 40,
+    backgroundColor: Colors.buttonDislike,
+    transform: [{ rotateZ: '-15deg' }],
+  },
+  stampText: {
+    color: Colors.backgroundDark,
+    fontSize: 22,
+    fontWeight: FontWeight.bold,
   },
 });

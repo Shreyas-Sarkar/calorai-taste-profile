@@ -132,8 +132,8 @@ export default function ResultsScreen({ navigation, route }: Props) {
               </Text>
             </View>
           </View>
-          {LIFESTYLE_ITEMS.map((item) => (
-            <View key={item} style={styles.checkRow}>
+          {LIFESTYLE_ITEMS.map((item, index) => (
+            <View key={item} style={[styles.checkRow, index > 0 && styles.rowBorderTop]}>
               <View style={styles.checkCircle}>
                 <Text style={styles.checkMark}>✓</Text>
               </View>
@@ -151,10 +151,10 @@ export default function ResultsScreen({ navigation, route }: Props) {
               <Text style={styles.cardHeaderSubtitle}>We'll Recommend These</Text>
             </View>
           </View>
-          {FOOD_ITEMS.map((item) => (
-            <View key={item.label} style={styles.foodRow}>
+          {FOOD_ITEMS.map((item, index) => (
+            <View key={item.label} style={[styles.foodRow, index > 0 && styles.rowBorderTop]}>
               <View style={styles.foodIconCircle}>
-                <Text style={styles.foodEmoji}>{item.emoji}</Text>
+                <Text style={styles.foodHeart}>♥</Text>
               </View>
               <Text style={styles.foodLabel}>{item.label}</Text>
             </View>
@@ -296,7 +296,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.sm,
-    paddingVertical: 8,
+    paddingVertical: 12,
+  },
+  rowBorderTop: {
     borderTopWidth: 1,
     borderTopColor: 'rgba(255,255,255,0.05)',
   },
@@ -322,20 +324,20 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.sm,
-    paddingVertical: 8,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(255,255,255,0.05)',
+    paddingVertical: 12,
   },
   foodIconCircle: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: Colors.accentGreenDim,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: Colors.buttonSuperLike || '#1877F2',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  foodEmoji: {
+  foodHeart: {
+    color: Colors.white,
     fontSize: 14,
+    marginTop: -2,
   },
   foodLabel: {
     fontSize: FontSize.md,

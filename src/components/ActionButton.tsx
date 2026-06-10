@@ -55,7 +55,17 @@ export default function ActionButton({ type, onPress }: Props) {
         activeOpacity={0.8}
         style={[
           styles.button,
-          { backgroundColor: bg, width: size, height: size, borderRadius: size / 2 },
+          { 
+            backgroundColor: bg, 
+            width: size, 
+            height: size, 
+            borderRadius: size / 2,
+            shadowColor: bg,
+            shadowOffset: { width: 0, height: 0 },
+            shadowOpacity: type === 'notSure' ? 0.2 : 0.6,
+            shadowRadius: type === 'notSure' ? 10 : 20,
+            elevation: type === 'notSure' ? 4 : 10,
+          },
         ]}
       >
         <Text style={[styles.icon, { fontSize: type === 'dislike' || type === 'like' ? 22 : 20 }]}>
