@@ -1,207 +1,222 @@
 import React from 'react';
 import {
-  View,
-  Text,
+  Platform,
   StyleSheet,
+  Text,
   TouchableOpacity,
-  StatusBar,
-  Dimensions,
+  View,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../navigation/AppNavigator';
-import {
-  Colors,
-  Gradients,
-  Spacing,
-  BorderRadius,
-  FontSize,
-  FontWeight,
-  Shadow,
-} from '../theme/index';
+import { useNavigation } from '@react-navigation/native';
+import GlassCard from '../components/GlassCard';
+import BackgroundBlobs from '../components/BackgroundBlobs';
 import BottomNav from '../components/BottomNav';
-import GlassView from '../components/GlassView';
+import { Colors, Spacing, Typography, Radius } from '../constants';
+import { RootStackParamList } from '../types';
+import { globalResults } from '../data';
 
-type IntroScreenNavigationProp = NativeStackNavigationProp<
-  RootStackParamList,
-  'Intro'
->;
+type NavProp = NativeStackNavigationProp<RootStackParamList, 'Intro'>;
 
-interface Props {
-  navigation: IntroScreenNavigationProp;
-}
+export default function IntroScreen() {
+  const navigation = useNavigation<NavProp>();
 
-const { width } = Dimensions.get('window');
-
-export default function IntroScreen({ navigation }: Props) {
-  const insets = useSafeAreaInsets();
+  const handleTabPress = (tab: 'Start' | 'FAQ' | 'TasteProfile' | 'Search') => {
+    if (tab === 'Start') navigation.navigate('Intro');
+    if (tab === 'FAQ') navigation.navigate('FAQ');
+    if (tab === 'TasteProfile') navigation.navigate('Results', { results: globalResults });
+  };
 
   return (
-    <View style={styles.root}>
-      <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
-      <LinearGradient
-        colors={Gradients.background as [string, string, ...string[]]}
-        style={StyleSheet.absoluteFill}
-        start={{ x: 0.5, y: 0 }}
-        end={{ x: 0.5, y: 1 }}
-      />
-      {/* Ambient background glows for glassmorphism */}
-      <View style={StyleSheet.absoluteFill} pointerEvents="none">
-        <LinearGradient
-          colors={['rgba(14, 165, 233, 0.15)', 'transparent']}
-          start={{ x: 0, y: 0.2 }}
-          end={{ x: 0.5, y: 0.5 }}
-          style={StyleSheet.absoluteFill}
-        />
-        <LinearGradient
-          colors={['rgba(34, 197, 94, 0.15)', 'transparent']}
-          start={{ x: 1, y: 0.8 }}
-          end={{ x: 0.5, y: 0.5 }}
-          style={StyleSheet.absoluteFill}
-        />
-      </View>
-
-      {/* Page header — outside the card */}
-      <View style={[styles.pageHeader, { paddingTop: insets.top + 16 }]}>
-        <TouchableOpacity style={styles.backButton}>
-          <Text style={styles.backButtonText}>{'<'}</Text>
-        </TouchableOpacity>
-        <Text style={styles.pageTitle}>Design Your Food Plan</Text>
-      </View>
-
-      {/* Main onboarding card */}
-      <View style={styles.scrollArea}>
-        <GlassView style={styles.card} borderRadius={BorderRadius.xl}>
-          {/* Emoji illustration */}
-          <Text style={styles.emoji}>😋</Text>
-
-          {/* Card heading */}
-          <Text style={styles.cardTitle}>Build Your Taste Profile</Text>
-
-          {/* Description */}
-          <Text style={styles.cardDescription}>
-            Swipe right on foods you love, left on{'\n'}foods you don't.
-          </Text>
-
-          {/* Secondary description */}
-          <Text style={styles.cardSubDescription}>
-            This helps us recommend meals you'll love eating.
-          </Text>
-
-          {/* CTA Button */}
-          <TouchableOpacity
-            style={styles.ctaButton}
-            onPress={() => navigation.navigate('Swipe')}
-            activeOpacity={0.85}
-          >
-            <Text style={styles.ctaButtonText}>Start Swiping</Text>
+    <LinearGradient
+      colors={[Colors.gradientTop, Colors.gradientBottom]}
+      style={styles.root}
+    >
+      <BackgroundBlobs />
+      <SafeAreaView style={styles.safe}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => navigation.goBack()} activeOpacity={0.75}>
+            <LinearGradient
+              colors={[
+                "rgba(255,255,255,0.5)",
+                "transparent",
+                "transparent",
+                "rgba(255,255,255,0.5)",
+              ]}
+              locations={[0, 0.35, 0.65, 1]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.backBtnGradient}
+            >
+              <LinearGradient
+                colors={['#18181A', '#0A0A0A']}
+                start={{ x: 0.2, y: 1 }}
+                end={{ x: 0.8, y: 0 }}
+                style={styles.backBtnInner}
+              >
+                <Text style={styles.backIcon}>‹</Text>
+              </LinearGradient>
+            </LinearGradient>
           </TouchableOpacity>
 
-          {/* Helper text */}
-          <Text style={styles.helperText}>Takes about 2 minutes.</Text>
-        </GlassView>
-      </View>
+          <Text 
+            style={styles.heading}
+            numberOfLines={1}
+            adjustsFontSizeToFit
+          >
+            Design Your Food Plan
+          </Text>
+        </View>
 
-      {/* Bottom Navigation */}
-      <BottomNav activeTab="Start" />
-    </View>
+        <View style={styles.cardWrapper}>
+          <GlassCard style={styles.card}>
+            <View style={styles.cardInner}>
+              <Text style={styles.mainEmoji}>😋</Text>
+              <Text style={styles.cardTitle}>Build Your Taste Profile</Text>
+              <Text style={styles.cardBody}>
+                Swipe right on foods you love, left on foods you don't.
+              </Text>
+              <Text style={styles.cardSubBody}>
+                This helps us recommend meals you'll love eating.
+              </Text>
+              <TouchableOpacity
+                style={styles.ctaButton}
+                onPress={() => navigation.navigate('Swipe')}
+                activeOpacity={0.85}
+              >
+                <Text style={styles.ctaText}>Start Swiping</Text>
+              </TouchableOpacity>
+              <Text style={styles.hint}>Takes about 2 minutes.</Text>
+            </View>
+          </GlassCard>
+        </View>
+
+        <BottomNav activeTab="Start" onTabPress={handleTabPress} />
+      </SafeAreaView>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: Colors.backgroundDark,
   },
-  pageHeader: {
+  safe: {
+    flex: 1,
+  },
+  header: {
     paddingHorizontal: Spacing.lg,
-    paddingBottom: Spacing.md,
+    paddingTop: Spacing.lg,
+    paddingBottom: Spacing.xs,
+    gap: Spacing.md,
   },
-  pageTitle: {
-    fontSize: FontSize.xxl,
-    fontWeight: FontWeight.bold,
-    color: Colors.textPrimary,
-    letterSpacing: -0.5,
+  backBtnGradient: {
+    width: 48,
+    height: 48,
+    borderRadius: Radius.full,
+    padding: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 12,
+    elevation: 6,
   },
-  backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.05)',
+  backBtnInner: {
+    flex: 1,
+    borderRadius: Radius.full,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
+    overflow: 'hidden',
   },
-  backButtonText: {
-    color: Colors.white,
-    fontSize: 20,
-    fontWeight: '300',
-    marginTop: -2,
+  backIcon: {
+    fontFamily: Typography.fontFamily,
+    fontSize: 36,
+    color: Colors.textPrimary,
+    lineHeight: 28,
+    marginTop: Platform.OS === 'ios' ? 8 : -5,
+    marginLeft: -2,
   },
-  scrollArea: {
+  heading: {
+    fontFamily: Typography.fontFamily,
+    fontSize: 28,
+    fontWeight: '800',
+    color: Colors.textPrimary,
+    textAlign: 'center',
+  },
+  cardWrapper: {
     flex: 1,
-    paddingHorizontal: Spacing.md,
-    justifyContent: 'center',
-    paddingBottom: Spacing.md,
+    paddingHorizontal: Spacing.lg,
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    paddingTop: Spacing.lg,
   },
   card: {
-    paddingVertical: Spacing.xxl,
-    paddingHorizontal: Spacing.xl,
-    alignItems: 'center',
-    borderWidth: 0,
-    ...Shadow.card,
+    width: '100%',
+    maxWidth: 400,
   },
-  emoji: {
-    fontSize: 56,
-    marginBottom: Spacing.xl,
+  cardInner: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 40,
+    paddingHorizontal: 24,
+  },
+  mainEmoji: {
+    fontSize: 72,
+    lineHeight: 80,
+    marginBottom: 16,
   },
   cardTitle: {
-    fontSize: FontSize.xxl,
-    fontWeight: FontWeight.bold,
+    fontFamily: Typography.fontFamily,
+    fontSize: 28,
+    fontWeight: '700',
     color: Colors.textPrimary,
     textAlign: 'center',
-    marginBottom: Spacing.md,
-    letterSpacing: -0.3,
+    marginBottom: 16,
   },
-  cardDescription: {
-    fontSize: FontSize.md,
-    fontWeight: FontWeight.regular,
-    color: Colors.textSecondary,
+  cardBody: {
+    fontFamily: Typography.fontFamily,
+    fontSize: 16,
+    color: 'rgba(217, 217, 217, 1)',
+    textAlign: 'center',
+    lineHeight: 24,
+    maxWidth: 320,
+    marginBottom: 20,
+  },
+  cardSubBody: {
+    fontFamily: Typography.fontFamily,
+    fontSize: 14,
+    color: 'rgba(217, 217, 217, 1)',
     textAlign: 'center',
     lineHeight: 22,
-    marginBottom: Spacing.lg,
-  },
-  cardSubDescription: {
-    fontSize: FontSize.sm,
-    fontWeight: FontWeight.regular,
-    color: Colors.textMuted,
-    textAlign: 'center',
-    lineHeight: 20,
-    marginBottom: Spacing.xxl,
+    maxWidth: 320,
+    marginBottom: 32,
   },
   ctaButton: {
-    backgroundColor: Colors.accentGreen,
-    borderRadius: BorderRadius.pill,
-    paddingVertical: 14,
-    paddingHorizontal: Spacing.xxl,
-    alignSelf: 'stretch',
+    backgroundColor: 'rgba(75, 216, 131, 1)',
+    borderRadius: 100,
+    minWidth: 220,
+    height: 52,
     alignItems: 'center',
-    marginBottom: Spacing.md,
-    ...Shadow.button,
+    justifyContent: 'center',
+    paddingHorizontal: 32,
+    marginBottom: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.4,
+    shadowRadius: 20,
+    elevation: 8,
   },
-  ctaButtonText: {
-    fontSize: FontSize.md,
-    fontWeight: FontWeight.semibold,
-    color: Colors.white,
-    letterSpacing: 0.2,
-  },
-  helperText: {
-    fontSize: FontSize.sm,
-    fontWeight: FontWeight.regular,
-    color: Colors.textMuted,
+  ctaText: {
+    fontFamily: Typography.fontFamily,
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#000000',
     textAlign: 'center',
+  },
+  hint: {
+    fontFamily: Typography.fontFamily,
+    fontSize: 14,
+    color: 'rgba(217, 217, 217, 1)',
   },
 });
