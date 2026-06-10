@@ -166,6 +166,21 @@ export default function SwipeScreen({ navigation }: Props) {
         start={{ x: 0.5, y: 0 }}
         end={{ x: 0.5, y: 1 }}
       />
+      {/* Ambient background glows for glassmorphism */}
+      <View style={StyleSheet.absoluteFill} pointerEvents="none">
+        <LinearGradient
+          colors={['rgba(14, 165, 233, 0.15)', 'transparent']}
+          start={{ x: 0, y: 0.2 }}
+          end={{ x: 0.5, y: 0.5 }}
+          style={StyleSheet.absoluteFill}
+        />
+        <LinearGradient
+          colors={['rgba(34, 197, 94, 0.15)', 'transparent']}
+          start={{ x: 1, y: 0.8 }}
+          end={{ x: 0.5, y: 0.5 }}
+          style={StyleSheet.absoluteFill}
+        />
+      </View>
 
       {/* Progress bar — not wired yet (Phase 5) */}
       <View style={[styles.progressContainer, { paddingTop: insets.top + 12 }]}>

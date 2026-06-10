@@ -15,7 +15,7 @@ interface Props {
 export default function GlassView({ 
   children, 
   style, 
-  intensity = 20, 
+  intensity = 40, 
   tint = 'dark',
   fallbackBackgroundColor = 'rgba(10, 16, 12, 0.95)',
   borderRadius = BorderRadius.xl
@@ -31,6 +31,7 @@ export default function GlassView({
           style,
         ]}
       >
+        <View style={styles.glassInner} />
         {children}
       </BlurView>
     );
@@ -52,10 +53,17 @@ export default function GlassView({
 
 const styles = StyleSheet.create({
   glassWrapper: {
-    backgroundColor: Colors.glassBackground,
     overflow: 'hidden',
     borderWidth: 1,
     borderColor: Colors.glassBorderLight,
+  },
+  glassInner: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: Colors.glassBackground,
   },
   androidFallback: {
     overflow: 'hidden',
