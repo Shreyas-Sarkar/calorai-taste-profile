@@ -4,16 +4,8 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import IntroScreen from '../screens/IntroScreen';
 import SwipeScreen from '../screens/SwipeScreen';
 import ResultsScreen from '../screens/ResultsScreen';
-import { Food } from '../types/index';
-
-export type RootStackParamList = {
-  Intro: undefined;
-  Swipe: undefined;
-  Results: {
-    likedFoods: Food[];
-    dislikedFoods: Food[];
-  };
-};
+import FAQScreen from '../screens/FAQScreen';
+import { Food, RootStackParamList } from '../types/index';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -31,6 +23,7 @@ export default function AppNavigator() {
         <Stack.Screen name="Intro" component={IntroScreen} />
         <Stack.Screen name="Swipe" component={SwipeScreen} />
         <Stack.Screen name="Results" component={ResultsScreen} />
+        <Stack.Screen name="FAQ" component={FAQScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

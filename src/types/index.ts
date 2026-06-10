@@ -21,7 +21,26 @@ export interface FoodsData {
 }
 
 // Navigation types
-export type SwipeAction = 'like' | 'dislike';
+export type SwipeDirection = 'like' | 'dislike' | 'superlike' | 'unsure';
+
+export interface SwipeResult {
+  food: Food;
+  direction: SwipeDirection;
+}
+
+export interface TastePersona {
+  emoji: string;
+  label: string;
+}
+
+export type RootStackParamList = {
+  Intro: undefined;
+  Swipe: undefined;
+  Results: {
+    results: SwipeResult[];
+  };
+  FAQ: undefined;
+};
 
 // Swipe state
 export interface SwipeState {

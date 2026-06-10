@@ -1,108 +1,189 @@
-import React from 'react';
+import React from "react";
 import {
-  View,
-  Text,
+  Platform,
   StyleSheet,
   TouchableOpacity,
-} from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Colors, Spacing, BorderRadius, FontSize, FontWeight, Shadow } from '../theme/index';
-import GlassView from './GlassView';
+  View,
+  Text,
+} from "react-native";
+import { BlurView } from "expo-blur";
+import { LinearGradient } from "expo-linear-gradient";
+import { SvgProps } from "react-native-svg";
+import HomeIcon from "../../assets/icons/home.svg";
+import QuestionIcon from "../../assets/icons/question.svg";
+import CarrotIcon from "../../assets/icons/carrot.svg";
+import SearchIcon from "../../assets/icons/search.svg";
+import { Colors, Radius, Typography, Spacing } from "../constants";
 
-export type NavTab = 'Start' | 'FAQ' | 'TasteProfile' | 'Search';
+type TabName = "Start" | "FAQ" | "TasteProfile" | "Search";
 
-interface Props {
-  activeTab: NavTab;
-  onTabPress?: (tab: NavTab) => void;
+interface BottomNavProps {
+  activeTab: TabName;
+  onTabPress?: (tab: TabName) => void;
 }
 
-const NAV_ITEMS: { tab: NavTab; icon: string; label: string }[] = [
-  { tab: 'Start',        icon: '⊙',  label: 'Start' },
-  { tab: 'FAQ',          icon: '?',   label: 'FAQ' },
-  { tab: 'TasteProfile', icon: '✏',  label: 'Taste Profile' },
-  { tab: 'Search',       icon: '⌕',  label: 'Search' },
+interface TabConfig {
+  name: TabName;
+  Icon: React.FC<SvgProps>;
+  label: string;
+}
+
+const TABS: TabConfig[] = [
+  { name: "Start", Icon: HomeIcon, label: "Start" },
+  { name: "FAQ", Icon: QuestionIcon, label: "FAQ" },
+  { name: "TasteProfile", Icon: CarrotIcon, label: "Taste Profile" },
 ];
 
-export default function BottomNav({ activeTab, onTabPress }: Props) {
-  const insets = useSafeAreaInsets();
-  const bottomPad = Math.max(insets.bottom, 8);
-
+function PillTabs({ activeTab, onTabPress }: BottomNavProps) {
   return (
-    <View style={[styles.wrapper, { paddingBottom: bottomPad }]}>
-      <GlassView 
-        style={styles.container} 
-        borderRadius={BorderRadius.xl}
+    <View style={styles.pillTabs}>
+      {TABS.map((tab) => {
+        const isActive = activeTab === tab.name;
+        const iconColor = isActive ? Colors.navActive : Colors.navInactive;
+        return (
+          <TouchableOpacity
+            key={tab.name}
+            onPress={() => onTabPress?.(tab.name)}
+            style={[styles.tab, isActive && styles.tabActive]}
+            activeOpacity={0.75}
+          >
+            <tab.Icon width={24} height={24} color={iconColor} />
+            <Text style={[styles.tabLabel, { color: iconColor }]}>
+              {tab.label}
+            </Text>
+          </TouchableOpacity>
+        );
+      })}
+    </View>
+  );
+}
+
+export default function BottomNav({ activeTab, onTabPress }: BottomNavProps) {
+  return (
+    <View style={styles.outerContainer}>
+      <LinearGradient
+        colors={[
+          "rgba(255,255,255,0.5)",
+          "transparent",
+          "transparent",
+          "rgba(255,255,255,0.5)",
+        ]}
+        locations={[0, 0.35, 0.65, 1]}
+        start={{ x: 0.5, y: -0.4 }}
+        end={{ x: 0.7, y: 1.5 }}
+        style={[styles.borderGradient, { flex: 1, height: 70 }]}
       >
-        {NAV_ITEMS.map(({ tab, icon, label }) => {
-          const isActive = tab === activeTab;
-          return (
-            <TouchableOpacity
-              key={tab}
-              style={styles.tab}
-              onPress={() => onTabPress?.(tab)}
-              activeOpacity={0.7}
-            >
-              <View style={[styles.iconWrap, isActive && styles.iconWrapActive]}>
-                <Text style={[styles.icon, isActive && styles.iconActive]}>
-                  {icon}
-                </Text>
-              </View>
-              {label.length <= 5 && (
-                <Text style={[styles.label, isActive && styles.labelActive]}>
-                  {label}
-                </Text>
-              )}
-            </TouchableOpacity>
-          );
-        })}
-      </GlassView>
+        <View style={styles.mainPillWrapper}>
+          <LinearGradient
+            colors={['#18181A', '#0A0A0A']}
+            start={{ x: 0.2, y: 1 }}
+            end={{ x: 0.8, y: 0 }}
+            style={styles.blurCard}
+          >
+            <View style={styles.blurOverlay}>
+              <PillTabs activeTab={activeTab} onTabPress={onTabPress} />
+            </View>
+          </LinearGradient>
+        </View>
+      </LinearGradient>
+
+      <LinearGradient
+        colors={[
+          "rgba(255,255,255,0.5)",
+          "transparent",
+          "transparent",
+          "rgba(255,255,255,0.5)",
+        ]}
+        locations={[0, 0.35, 0.65, 1]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={[styles.borderGradient, { width: 70, height: 70 }]}
+      >
+        <TouchableOpacity
+          onPress={() => onTabPress?.("Search")}
+          style={styles.searchButtonInner}
+          activeOpacity={0.75}
+        >
+          <LinearGradient
+            colors={['#18181A', '#0A0A0A']}
+            start={{ x: 0.2, y: 1 }}
+            end={{ x: 0.8, y: 0 }}
+            style={styles.blurCard}
+          >
+            <View style={styles.searchOverlay}>
+              <SearchIcon width={25} height={25} color={Colors.navInactive} />
+            </View>
+          </LinearGradient>
+        </TouchableOpacity>
+      </LinearGradient>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  wrapper: {
-    paddingHorizontal: Spacing.md,
-    paddingTop: Spacing.sm,
+  outerContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginHorizontal: Spacing.lg,
+    marginBottom: Spacing.md,
+    gap: Spacing.sm,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.6,
+    shadowRadius: 32,
+    elevation: 12,
   },
-  container: {
-    flexDirection: 'row',
-    paddingVertical: Spacing.sm,
-    paddingHorizontal: Spacing.sm,
-    alignItems: 'center',
-    justifyContent: 'space-around',
-    borderWidth: 0, 
-    ...Shadow.nav,
+  borderGradient: {
+    padding: 1,
+    borderRadius: Radius.full,
+  },
+  mainPillWrapper: {
+    flex: 1,
+    height: '100%',
+    borderRadius: Radius.full,
+    overflow: "hidden",
+  },
+  searchButtonInner: {
+    flex: 1,
+    height: '100%',
+    borderRadius: Radius.full,
+    overflow: "hidden",
+  },
+  blurCard: {
+    flex: 1,
+  },
+  blurOverlay: {
+    flex: 1,
+  },
+  searchOverlay: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  androidContainer: {
+    backgroundColor: "#181A1B",
+  },
+  pillTabs: {
+    flex: 1,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 8,
   },
   tab: {
     flex: 1,
-    alignItems: 'center',
-    paddingVertical: 4,
+    height: 52,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: Radius.full,
+    gap: 2,
   },
-  iconWrap: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 2,
+  tabActive: {
+    backgroundColor: "rgba(255, 255, 255, 0.12)", // gray selection
   },
-  iconWrapActive: {
-    backgroundColor: 'rgba(34, 197, 94, 0.15)',
-  },
-  icon: {
-    fontSize: 18,
-    color: Colors.navIconInactive,
-  },
-  iconActive: {
-    color: Colors.navIconActive,
-  },
-  label: {
-    fontSize: FontSize.xs,
-    fontWeight: FontWeight.medium,
-    color: Colors.navIconInactive,
-  },
-  labelActive: {
-    color: Colors.navIconActive,
+  tabLabel: {
+    fontFamily: Typography.fontFamily,
+    fontSize: 10,
+    fontWeight: Typography.semibold,
   },
 });
